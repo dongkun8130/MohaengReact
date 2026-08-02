@@ -126,7 +126,7 @@ function Logs() {
     }).then(res => setStats(res.data))
       .catch(err => console.error("통계 로딩 실패:", err));
   };
-
+ 
   // 안의 값들 변할때마다 호출
   useEffect(() => {
     fetchLogList();
