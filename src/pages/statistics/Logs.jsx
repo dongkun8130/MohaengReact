@@ -205,7 +205,6 @@ function Logs() {
             </div>
             {/* 날짜별 선택 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <RiCalendarLine />
               <input
                 type="date"
                 className="form-input"
