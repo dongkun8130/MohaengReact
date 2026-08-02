@@ -33,31 +33,12 @@ const categories = [
   { id: 'security', label: '보안', icon: RiShieldLine }
 ];
 
-// 로그 데이터
-const logsData = [
-  { id: 1, timestamp: '2024-12-18 14:32:15', level: 'INFO', category: 'auth', source: 'AuthService', message: '사용자 로그인 성공', detail: 'user: admin@mohaeng.com, method: password', ip: '192.168.1.100', userId: 'admin' },
-  { id: 2, timestamp: '2024-12-18 14:30:45', level: 'WARNING', category: 'payment', source: 'PaymentService', message: '결제 재시도 발생', detail: 'orderId: PAY20241218001, retry: 2/3, gateway: KakaoPay', ip: '203.254.12.55', userId: 'user123' },
-  { id: 3, timestamp: '2024-12-18 14:28:22', level: 'ERROR', category: 'api', source: 'RecommendationAPI', message: 'API 응답 지연', detail: 'endpoint: /api/recommend, timeout: 5000ms, status: 504', ip: '10.0.0.1', userId: 'system' },
-  { id: 4, timestamp: '2024-12-18 14:25:10', level: 'INFO', category: 'booking', source: 'BookingService', message: '예약 완료', detail: 'bookingId: BK20241218042, product: 제주 스노클링, amount: 85000', ip: '118.235.89.23', userId: 'travel_lover' },
-  { id: 5, timestamp: '2024-12-18 14:22:33', level: 'INFO', category: 'auth', source: 'UserService', message: '회원가입 완료', detail: 'userId: 12459, type: general, email: new@email.com', ip: '211.178.45.67', userId: '12459' },
-  { id: 6, timestamp: '2024-12-18 14:20:18', level: 'WARNING', category: 'security', source: 'SecurityService', message: '비정상 접근 시도 감지', detail: 'attempts: 5, blocked: true, reason: brute_force', ip: '45.89.12.33', userId: 'unknown' },
-  { id: 7, timestamp: '2024-12-18 14:18:45', level: 'ERROR', category: 'system', source: 'DatabaseService', message: '쿼리 실행 실패', detail: 'table: reservations, error: connection timeout, duration: 30001ms', ip: '10.0.0.2', userId: 'system' },
-  { id: 8, timestamp: '2024-12-18 14:15:22', level: 'INFO', category: 'system', source: 'EmailService', message: '예약 확인 메일 발송', detail: 'to: user@email.com, template: booking_confirm, bookingId: BK20241218041', ip: '10.0.0.3', userId: 'system' },
-  { id: 9, timestamp: '2024-12-18 14:12:55', level: 'INFO', category: 'auth', source: 'AuthService', message: '사용자 로그아웃', detail: 'user: test@test.com, session: 2h 15m', ip: '192.168.1.105', userId: 'test' },
-  { id: 10, timestamp: '2024-12-18 14:10:30', level: 'WARNING', category: 'system', source: 'CacheService', message: '캐시 만료 - 재생성 필요', detail: 'key: popular_destinations, ttl: expired, size: 2.4MB', ip: '10.0.0.1', userId: 'system' },
-  { id: 11, timestamp: '2024-12-18 14:08:15', level: 'INFO', category: 'payment', source: 'PaymentService', message: '결제 완료', detail: 'orderId: PAY20241218002, amount: 320000, method: card', ip: '125.176.89.45', userId: 'happy_traveler' },
-  { id: 12, timestamp: '2024-12-18 14:05:42', level: 'ERROR', category: 'api', source: 'WeatherAPI', message: '외부 API 호출 실패', detail: 'endpoint: weather.api.com, error: 503 Service Unavailable', ip: '10.0.0.1', userId: 'system' },
-  { id: 13, timestamp: '2024-12-18 14:02:18', level: 'INFO', category: 'booking', source: 'BookingService', message: '예약 취소', detail: 'bookingId: BK20241218038, reason: 일정변경, refund: 95000', ip: '223.38.156.78', userId: 'user456' },
-  { id: 14, timestamp: '2024-12-18 13:58:33', level: 'WARNING', category: 'security', source: 'SecurityService', message: 'IP 차단', detail: 'ip: 89.123.45.67, reason: malicious_request, duration: 24h', ip: '10.0.0.1', userId: 'system' },
-  { id: 15, timestamp: '2024-12-18 13:55:10', level: 'INFO', category: 'auth', source: 'AuthService', message: '비밀번호 변경', detail: 'userId: user789, method: forgot_password', ip: '175.223.45.89', userId: 'user789' }
-];
 
 // 로그 레벨
 const levelConfig = {
   INFO: { icon: RiInformationLine, className: 'badge-primary', color: '#2563EB', bg: '#DBEAFE' },
   WARN: { icon: RiAlertLine, className: 'badge-warning', color: '#D97706', bg: '#FEF3C7' },
   ERROR: { icon: RiErrorWarningLine, className: 'badge-danger', color: '#DC2626', bg: '#FEE2E2' },
-  // SUCCESS: { icon: RiCheckLine, className: 'badge-success', color: '#059669', bg: '#D1FAE5' }
 };
 
 // 로그 카테고리별 ui
@@ -105,8 +86,13 @@ function Logs() {
     start: getToday(),
     end: getToday()
   });
+  const [pagInfo, setPagInfo] = useState({ currentPage: 1, totalPage: 1, startPage: 1, endPage: 1 });
+  const [stats, setStats] = useState({ 
+    TOTAL: 0, INFO: 0, WARN: 0, ERROR: 0, AUTH: 0, BOOKING: 0, PAYMENT: 0 
+    , PRODUCT : 0, SECURITY : 0, SYSTEM : 0
+  });
+
   const [detailModal, setDetailModal] = useState({ isOpen: false, log: null });
-  const [confirmModal, setConfirmModal] = useState({ isOpen: false });
 
   const periods = [
     { id: 'today', label: '오늘' },
@@ -122,41 +108,31 @@ function Logs() {
         currentPage: currentPage,
         searchWord: searchTerm,
         searchType: categoryFilter,
-        startDate: dateRange.start, // 날짜 추가
-        endDate: dateRange.end      // 날짜 추가
+        levelFilter: levelFilter,
+        startDate: dateRange.start,
+        endDate: dateRange.end
       }
     }).then(res => {
       // console.log("res : ", res.data.dataList);
       setDataList(res.data.dataList || []);
-
-      console.log("dataList : ", dataList);
+      setPagInfo(res.data);
+      // console.log("dataList : ", dataList);
     }).catch(err => console.error("목록 로딩 실패:", err));
+  };
+
+  const fetchStats = () => {
+    api.get(`/admin/statistics/logs/stats`, {
+      params: { startDate: dateRange.start, endDate: dateRange.end }
+    }).then(res => setStats(res.data))
+      .catch(err => console.error("통계 로딩 실패:", err));
   };
 
   // 안의 값들 변할때마다 호출
   useEffect(() => {
-    console.log("초기화");
     fetchLogList();
-  }, [dateRange]);
-
-  //currentPage, searchTerm, categoryFilter, dateRange
-
-  // 불러온 내역 가져오기
-  const filteredLogs = dataList.filter(log => {
-    // console.log("log : ", log);
-
-    const matchesSearch = log.msg.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.source.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const logCategory = getCategoryByMsg(log.msg);
-    const matchesCategory = categoryFilter === 'all' || logCategory === categoryFilter;
-
-    const matchesLevel = levelFilter === 'all' || log.level === levelFilter;
-
-    // const logDate = log.regDt.split('T')[0];
-    // const matchesDate = logDate >= dateRange.start && logDate <= dateRange.end;
-    return matchesSearch && matchesLevel && matchesCategory;
-  });
+    fetchStats();
+    console.log("stats : ", stats);
+  }, [currentPage, dateRange, categoryFilter, levelFilter, searchTerm]);
 
   // 기간 선택 핸들러
   const handlePeriodChange = (periodId) => {
@@ -182,27 +158,16 @@ function Logs() {
       start: `${startYear}-${startMonth}-${startDate}`,
       end: end
     });
+    setCurrentPage(1);   
   };
-
-  const totalCount = dataList.length;
-  const errorCount = dataList.filter(l => l.level === 'ERROR').length;
-  const warningCount = dataList.filter(l => l.level === 'WARN').length;
-  const infoCount = dataList.filter(l => l.level === 'INFO').length;
-  console.log("errorCount : ", errorCount);
-  console.log("warningCount : ", warningCount);
-  console.log("infoCount : ", infoCount);
 
   const handleViewDetail = (log) => {
     setDetailModal({ isOpen: true, log });
   };
 
-  const handleClearLogs = () => {
-    setConfirmModal({ isOpen: true });
-  };
-
-  const confirmClearLogs = () => {
-    alert('오래된 로그가 삭제되었습니다.');
-    setConfirmModal({ isOpen: false });
+  const handleCategoryChange = (id) => {
+    setCategoryFilter(id);
+    setCurrentPage(1);
   };
 
   /* 페이지 시작 */
@@ -219,9 +184,6 @@ function Logs() {
           <button className="btn btn-secondary" onClick={() => window.location.reload()}>
             <RiRefreshLine /> 새로고침
           </button>
-          {/* <button className="btn btn-secondary">
-            <RiDownloadLine /> 로그 다운로드
-          </button> */}
         </div>
       </div>
 
@@ -248,7 +210,10 @@ function Logs() {
                 type="date"
                 className="form-input"
                 value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                onChange={(e) => { 
+                  setDateRange({ ...dateRange, start: e.target.value }); 
+                  setCurrentPage(1); 
+                }}
                 style={{ padding: '8px 12px' }}
               />
               <span>~</span>
@@ -256,7 +221,10 @@ function Logs() {
                 type="date"
                 className="form-input"
                 value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                onChange={(e) => { 
+                  setDateRange({ ...dateRange, end: e.target.value }); 
+                  setCurrentPage(1); 
+                }}
                 style={{ padding: '8px 12px' }}
               />
             </div>
@@ -273,7 +241,7 @@ function Logs() {
               <span>전체 로그</span>
             </div>
             <div className="stat-value-group">
-              <span>{totalCount}건</span>
+              <span>{stats.TOTAL}건</span>
               <span className="stat-percent">(100%)</span>
             </div>
           </div>
@@ -290,15 +258,15 @@ function Logs() {
               <span>INFO</span>
             </div>
             <div className="stat-value-group">
-              <span>{infoCount}건</span>
+              <span>{stats.INFO}건</span>
               <span className="stat-percent">
-                ({totalCount > 0 ? ((infoCount / totalCount) * 100).toFixed(1) : 0}%)
+                ({stats.TOTAL > 0 ? ((stats.INFO / stats.TOTAL) * 100).toFixed(1) : 0}%)
               </span>
             </div>
           </div>
           <div className="progress-bg">
             <div className="progress-fill" style={{
-              width: `${totalCount > 0 ? (infoCount / totalCount) * 100 : 0}%`,
+              width: `${stats.TOTAL > 0 ? (stats.INFO / stats.TOTAL) * 100 : 0}%`,
               backgroundColor: '#2563eb'
             }} />
           </div>
@@ -312,19 +280,19 @@ function Logs() {
               <span>WARN</span>
             </div>
             <div className="stat-value-group">
-              <span>{warningCount}건</span>
+              <span>{stats.WARN}건</span>
               <span className="stat-percent">
-                ({totalCount > 0 ? ((warningCount / totalCount) * 100).toFixed(1) : 0}%)
+                ({stats.TOTAL > 0 ? ((stats.WARN / stats.TOTAL) * 100).toFixed(1) : 0}%)
               </span>
             </div>
           </div>
           <div className="progress-bg">
             <div className="progress-fill" style={{
-              width: `${totalCount > 0 ? (warningCount / totalCount) * 100 : 0}%`,
+              width: `${stats.TOTAL > 0 ? (stats.WARN / stats.TOTAL) * 100 : 0}%`,
               backgroundColor: '#d97706'
             }} />
           </div>
-          {warningCount > 0 && <div className="stat-alert" style={{ color: '#d97706' }}>⚠️ 주의 필요</div>}
+          {stats.WARN > 0 && <div className="stat-alert" style={{ color: '#d97706' }}>⚠️ 주의 필요</div>}
         </div>
 
         {/* 4. ERROR */}
@@ -335,19 +303,19 @@ function Logs() {
               <span>ERROR</span>
             </div>
             <div className="stat-value-group">
-              <span>{errorCount}건</span>
+              <span>{stats.ERROR }건</span>
               <span className="stat-percent">
-                ({totalCount > 0 ? ((errorCount / totalCount) * 100).toFixed(1) : 0}%)
+                ({stats.TOTAL > 0 ? ((stats.ERROR / stats.TOTAL) * 100).toFixed(1) : 0}%)
               </span>
             </div>
           </div>
           <div className="progress-bg">
             <div className="progress-fill" style={{
-              width: `${totalCount > 0 ? (errorCount / totalCount) * 100 : 0}%`,
+              width: `${stats.TOTAL > 0 ? (stats.ERROR / stats.TOTAL) * 100 : 0}%`,
               backgroundColor: '#dc2626'
             }} />
           </div>
-          {errorCount > 0 && <div className="stat-alert" style={{ color: '#dc2626' }}>🚨 확인 필요</div>}
+          {stats.ERROR > 0 && <div className="stat-alert" style={{ color: '#dc2626' }}>🚨 확인 필요</div>}
         </div>
       </div>
 
@@ -357,21 +325,19 @@ function Logs() {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {categories.map(cat => {
               const IconComponent = cat.icon;
-              // 필터링
-              // const count = cat.id === 'all' ? totalCount : dataList.filter(l => getCategoryByMsg(l.msg) === cat.id).length;
 
               // 1. 카운트 계산
               const count = cat.id === 'all'
-                ? totalCount
-                : dataList.filter(l => getCategoryByMsg(l.msg) === cat.id).length;
+                ? stats.TOTAL
+                : stats[cat.id.toUpperCase()];
 
               // 2. count가 0이면 아무것도 렌더링하지 않음 (null 반환)
-              if (count === 0) return null;
+              if (cat.id !== 'all' && count === 0) return null;
 
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setCategoryFilter(cat.id)}
+                  onClick={() => handleCategoryChange(cat.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -414,7 +380,10 @@ function Logs() {
               className="form-input"
               placeholder="로그 메시지, 소스 검색..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
           <div className="filter-group">
@@ -422,7 +391,10 @@ function Logs() {
             <select
               className="form-input form-select"
               value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value)}
+              onChange={(e) => {
+                setLevelFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               style={{ width: 'auto' }}
             >
               <option value="all">전체 레벨</option>
@@ -430,15 +402,12 @@ function Logs() {
               <option value="WARN">WARN</option>
               <option value="ERROR">ERROR</option>
             </select>
-            <button className="btn btn-outline-danger btn-sm" onClick={handleClearLogs}>
-              <RiDeleteBinLine /> 오래된 로그 삭제
-            </button>
           </div>
         </div>
 
         <div className="card-body" style={{ padding: 0 }}>
           <p style={{ padding: '12px 20px', margin: 0, background: '#F9FAFB', borderBottom: '1px solid var(--border-color)', fontSize: 13, color: 'var(--text-muted)' }}>
-            검색 결과: {filteredLogs.length}건
+            검색 결과: {pagInfo.totalRecord}건
           </p>
         </div>
 
@@ -456,7 +425,7 @@ function Logs() {
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.map(log => {
+              {dataList.map(log => {
                 const LevelIcon = levelConfig[log.level].icon;
 
                 // 타입 매칭
@@ -466,7 +435,7 @@ function Logs() {
                   ? log.msg.split('###')[0].split(':')[0] // '에러 발생' 근처까지만 깔끔하게 자름
                   : log.msg;
                 return (
-                  <tr key={log.systemLogNo} style={{ background: log.level === 'ERROR' ? '#FEF2F2' : log.level === 'WARNING' ? '#FFFBEB' : 'transparent' }}>
+                  <tr key={log.systemLogNo} style={{ background: log.level === 'ERROR' ? '#FEF2F2' : log.level === 'WARN' ? '#FFFBEB' : 'transparent' }}>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <RiTimeLine size={12} />
@@ -538,12 +507,24 @@ function Logs() {
 
         {/* 페이지 네이션 */}
         <div className="pagination">
-          <button className="pagination-btn" disabled>&lt;</button>
+          <button className="pagination-btn" disabled={pagInfo.startPage <= 1}
+            onClick={() => setCurrentPage(pagInfo.startPage - 1)}>&lt;
+          </button>
           {/* block수만큼 반복 */}
-          <button className="pagination-btn active">1</button>
-          <button className="pagination-btn">2</button>
-          <button className="pagination-btn">3</button>
-          <button className="pagination-btn">&gt;</button>
+          {Array.from(
+              { length: pagInfo.endPage - pagInfo.startPage + 1 },
+              (_, i) => pagInfo.startPage + i
+            ).map(num => (
+              <button key={num}
+                className={`pagination-btn ${currentPage === num ? 'active' : ''}`}
+                onClick={() => setCurrentPage(num)}>
+                {num}
+              </button>
+            ))}
+
+            <button className="pagination-btn" disabled={pagInfo.endPage >= pagInfo.totalPage}
+              onClick={() => setCurrentPage(pagInfo.endPage + 1)}>&gt;
+            </button>
         </div>
       </div>
 
@@ -567,7 +548,7 @@ function Logs() {
             ? log.msg.split('###')[1] // '에러 발생' 근처까지만 깔끔하게 자름
             : log.msg;
 
-          console.log("catConfig : ", catConfig);
+          // console.log("catConfig : ", catConfig);
           return (
             <div>
               {/* 헤더 */}
@@ -680,16 +661,7 @@ function Logs() {
         })()}
       </Modal>
 
-      {/* 삭제 확인 모달 */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ isOpen: false })}
-        onConfirm={confirmClearLogs}
-        title="오래된 로그 삭제"
-        message="30일 이전의 로그를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-        confirmText="삭제"
-        type="danger"
-      />
+
     </div>
   );
 }
