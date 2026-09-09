@@ -31,7 +31,7 @@ React Repository (현재)
 
 ## 🖥️ 주요 화면
 
-<!-- 관리자 페이지 화면 이미지 추가 -->
+<img width="900" alt="메인 화면" src="https://github.com/user-attachments/assets/e4135de8-e5dc-4605-bb15-816100541b5b" />
 
 ---
 
