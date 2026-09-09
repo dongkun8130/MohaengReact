@@ -48,7 +48,7 @@ React Repository (현재)
 - 환불/정산 관리
 - 상품 문의, 리뷰 관리
 
-### UI 구현 (백엔드 연동 예정)
+### UI 구현
 
 - 대시보드, 회원/서비스 통계, 챗봇, 배너 관리, 결제 관리 등
 
@@ -57,11 +57,11 @@ React Repository (현재)
 ## 🔧 Tech Stack
 
 - React 19, React Router v7
-- Axios (Backend API 통신)
-- Chart.js / Recharts (통계 시각화)
+- Axios
+- Chart.js / Recharts
 - react-google-recaptcha
-- SweetAlert2 (알림/확인창)
-- XLSX (엑셀 내보내기)
+- SweetAlert2
+- XLSX
 - Vite
 
 ---
